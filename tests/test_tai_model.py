@@ -1,4 +1,4 @@
-"""Tải model Whisper (vimediakit/modeldl.py): chạy offline bằng máy chủ HTTP giả lập API + resolve của Hugging Face."""
+"""Whisper model download (vimediakit/modeldl.py): runs offline against a fake HTTP server that mimics the Hugging Face API + resolve endpoints."""
 import hashlib
 import http.server
 import json
@@ -22,9 +22,9 @@ FILES = {
 
 
 class _Handler(http.server.BaseHTTPRequestHandler):
-    cut_once = False       # lần đầu tải model.bin: gửi nửa chừng rồi đóng kết nối
-    stall_once = False     # lần đầu tải model.bin: im lặng (mô phỏng treo) rồi mới trả lời
-    bad_sha = False        # công bố sha256 sai cho model.bin
+    cut_once = False       # first model.bin download: send half of it, then close the connection
+    stall_once = False     # first model.bin download: stay silent (simulating a hang) before answering
+    bad_sha = False        # advertise a wrong sha256 for model.bin
     hits: list = []
 
     def log_message(self, *a):
@@ -53,7 +53,7 @@ class _Handler(http.server.BaseHTTPRequestHandler):
                 start = int(rng[6:].split("-")[0])
             if self.path.endswith("model.bin") and cls.stall_once:
                 cls.stall_once = False
-                threading.Event().wait(2.5)  # không dùng time.sleep: fixture đã vá time.sleep
+                threading.Event().wait(2.5)  # do not use time.sleep: the fixture has patched time.sleep
             self.send_response(206 if start else 200)
             self.send_header("Content-Length", str(len(data) - start))
             if start:

@@ -1,4 +1,4 @@
-"""Lồng tiếng + xuất video tối thiểu: ghép đúng mốc, tăng tốc khi dài, huỷ, burn-in phụ đề thật bằng ffmpeg."""
+"""Dubbing + minimal video export: exact timestamp placement, speed-up when too long, cancellation, real subtitle burn-in with ffmpeg."""
 import os
 import shutil
 import subprocess
@@ -11,7 +11,7 @@ from vimediakit import dubbing, render_min
 from vimediakit.srt import Cue
 
 FF = shutil.which("ffmpeg")
-needs_ff = pytest.mark.skipif(not FF, reason="không có ffmpeg trên máy test")
+needs_ff = pytest.mark.skipif(not FF, reason="ffmpeg is not available on the test machine")
 
 
 def _tone(path, seconds, freq=440.0, sr=24000):
@@ -43,10 +43,10 @@ def test_dub_ghep_dung_moc_va_tang_toc(tmp_path):
     assert st["doc"] == 3 and st["tang_toc"] == 1 and st["bo_qua"] == 0
     y, sr = sf.read(out)
     assert sr == 24000
-    # đoạn 0–1 s là im lặng; có tiếng quanh 1.0–1.8 s
+    # the 0–1 s stretch is silent; there is sound around 1.0–1.8 s
     assert np.abs(y[: int(0.9 * sr)]).max() < 1e-3
     assert np.abs(y[int(1.1 * sr): int(1.7 * sr)]).max() > 0.2
-    # câu 2 bắt đầu ở 4.0 s và có tiếng
+    # cue 2 starts at 4.0 s and has sound
     assert np.abs(y[int(4.05 * sr): int(4.4 * sr)]).max() > 0.2
     assert not os.path.exists(out + ".tmp.wav")
 

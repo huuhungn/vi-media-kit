@@ -1,13 +1,13 @@
-# modeldl.py - tải model Whisper (định dạng faster-whisper) từ Hugging Face, có tiến trình thật
-"""Tải model nhận dạng giọng nói về data/whisper_models theo bố cục cache HuggingFace
-(models--<org>--<repo>/snapshots/<sha>/…), để faster-whisper dùng được ngay.
+# modeldl.py - download Whisper models (faster-whisper format) from Hugging Face, with real progress reporting
+"""Download a speech-recognition model into data/whisper_models using the HuggingFace cache layout
+(models--<org>--<repo>/snapshots/<sha>/…), so faster-whisper can use it right away.
 
-Vì sao không dùng snapshot_download của faster-whisper: nó không báo tiến trình (thanh dừng ở 5%), không có hạn chờ
-rõ ràng khi mạng chập chờn (CDN Xet), và chạy nhiều luồng khó kiểm soát. Ở đây:
-- hỏi API lấy sha commit + kích thước + sha256 từng file; tải tuần tự bằng urllib, đọc có hạn chờ (READ_TIMEOUT),
-  thử lại tối đa RETRIES lần và nối tiếp (Range) từ file .part;
-- báo "đã tải/tổng MB · tốc độ" liên tục; huỷ được; kiểm sha256 của file lớn;
-- endpoint đọc từ biến môi trường HF_ENDPOINT (mặc định https://huggingface.co) để người dùng tự chọn bản mirror.
+Why faster-whisper's snapshot_download is not used: it reports no progress (the bar stalls at 5%), has no explicit
+timeout when the network is flaky (Xet CDN), and runs several threads that are hard to control. Here:
+- ask the API for the commit sha + size + sha256 of each file; download sequentially with urllib, reads have a timeout
+  (READ_TIMEOUT), retry up to RETRIES times and resume (Range) from the .part file;
+- continuously report "downloaded/total MB · speed"; cancellable; verify the sha256 of large files;
+- the endpoint is read from the HF_ENDPOINT environment variable (default https://huggingface.co) so users can pick a mirror.
 """
 from __future__ import annotations
 
@@ -25,18 +25,18 @@ from collections.abc import Callable
 
 UA = "vi-media-kit (+modeldl)"
 ENDPOINT = "https://huggingface.co"
-READ_TIMEOUT = 30      # giây chờ tối đa cho mỗi lần đọc; quá hạn = coi như treo, thử lại
+READ_TIMEOUT = 30      # max seconds to wait per read; past that the download counts as hung and is retried
 RETRIES = 6
 _NAMES = ("config.json", "preprocessor_config.json", "tokenizer.json", "model.bin")
 _CHUNK = 262144
 
 
 class TaiModelError(RuntimeError):
-    """Lỗi tải model (đã có thông báo tiếng Việt)."""
+    """Model download error (the message is already in Vietnamese)."""
 
 
 class KhongTruyCap(TaiModelError):
-    """Không hỏi được API (mạng chặn / DNS): nơi gọi có thể lùi về cách tải cũ."""
+    """The API cannot be reached (network blocked / DNS): the caller may fall back to the old download method."""
 
 
 _SHA_RE = re.compile(r"[0-9a-f]{40}")
@@ -45,7 +45,7 @@ _locks_guard = threading.Lock()
 
 
 def _want(fn: str) -> bool:
-    """Chỉ nhận tên file phẳng (không '/', '\\', '..') — giá trị này đến từ máy chủ (có thể là mirror)."""
+    """Accept only flat file names (no '/', '\\', '..') — this value comes from the server (possibly a mirror)."""
     if "/" in fn or "\\" in fn or ".." in fn or not fn:
         return False
     return fn in _NAMES or fn.startswith("vocabulary.")
@@ -72,7 +72,7 @@ def _open(url: str, headers: dict | None = None, timeout: float | None = None):
 
 
 def thong_tin(repo: str, endpoint: str | None = None) -> tuple[str, list[dict]]:
-    """(sha commit, [{name, size, sha256}]) của các file cần cho faster-whisper."""
+    """(commit sha, [{name, size, sha256}]) of the files faster-whisper needs."""
     ep = (endpoint or _endpoint()).rstrip("/")
     _check_endpoint(ep)
     try:
@@ -137,7 +137,7 @@ def _tai_file(url: str, dst: str, size: int, sha256: str, step: Callable[[int], 
         except TaiModelError:
             raise
         except urllib.error.HTTPError as e:
-            if e.code == 416 and size and have == size:  # .part đã đủ, máy chủ không còn gì để gửi tiếp
+            if e.code == 416 and size and have == size:  # the .part file is already complete, the server has nothing left to send
                 break
             if e.code in (401, 403, 404):
                 raise TaiModelError(f"Hugging Face từ chối tải {os.path.basename(dst)} (mã {e.code}).") from e
@@ -161,11 +161,11 @@ def _tai_file(url: str, dst: str, size: int, sha256: str, step: Callable[[int], 
 
 def tai(name: str, repo: str, models_dir: str, on_progress: Callable[[int, str], None] | None = None,
         on_log: Callable[[str], None] | None = None, should_cancel: Callable[[], bool] | None = None) -> str:
-    """Tải đủ file của model vào models_dir; trả về thư mục snapshot. Đã đủ file thì không tải lại."""
+    """Download all model files into models_dir and return the snapshot directory. Files that are already complete are not downloaded again."""
     with _locks_guard:
         lock = _locks.setdefault(repo, threading.Lock())
     if not lock.acquire(blocking=False):
-        # đã có luồng khác đang tải cùng model: chờ rồi dùng kết quả (hàm tải sẽ thấy file đã đủ)
+        # another thread is already downloading the same model: wait, then reuse the result (the download function will see the files are complete)
         (on_log or (lambda s: None))(f"   Đang có một lần tải '{name}' khác, chờ…")
         lock.acquire()
     try:
@@ -215,7 +215,7 @@ def _tai_locked(name: str, repo: str, models_dir: str, on_progress, on_log, shou
         _tai_file(url, dst, f["size"], f["sha256"], step, cancel, log)
         done_before += f["size"]
     snaps = os.path.join(base, "snapshots")
-    for old in os.listdir(snaps):  # snapshot cũ (đã có bản mới đủ file) chiếm đĩa vô ích
+    for old in os.listdir(snaps):  # old snapshots (a newer, complete one exists) just waste disk space
         p = os.path.join(snaps, old)
         if old != sha and os.path.isdir(p):
             shutil.rmtree(p, ignore_errors=True)

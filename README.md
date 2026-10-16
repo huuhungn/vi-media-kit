@@ -1,55 +1,55 @@
 # vi-media-kit
 
-Bộ thư viện Python nhỏ cho ứng dụng giọng nói và phụ đề tiếng Việt. Không có giao diện, không kèm model, không kèm ffmpeg.
-Toàn bộ mã trong repo này là mã viết mới; repo không chứa mã, dữ liệu, biểu tượng hay tệp thực thi của ứng dụng bên thứ ba.
+A small Python library for Vietnamese speech and subtitle applications. No GUI, no bundled models, no bundled ffmpeg.
+All code in this repository is newly written; the repository contains no code, data, icons or executables from third-party applications.
 
-Thông báo cho người dùng viết bằng tiếng Việt, tên hàm và biến phần lớn cũng là tiếng Việt không dấu.
+User-facing messages are written in Vietnamese, and most function and variable names are Vietnamese without diacritics.
 
-## Có gì bên trong
+## What's inside
 
-| Mô-đun | Việc làm |
+| Module | Purpose |
 |---|---|
-| `vimediakit.srt` | Đọc/ghi `.srt`: chịu CRLF, thiếu số thứ tự, mốc `.` thay `,` |
-| `vimediakit.subtitles` | Xuất `srt/vtt/txt`, gộp/tách câu, đọc đúng mã hoá (UTF-8, UTF-16, cp1258), tìm không dấu |
-| `vimediakit.dubbing` | Lồng tiếng thử nghiệm: mỗi câu phụ đề → TTS (hàm do bạn truyền vào) → ghép đúng mốc, tự tăng tốc khi câu dài (cần ffmpeg) |
-| `vimediakit.render_min` | Ghi cứng phụ đề vào video và/hoặc thay âm thanh, có tiến trình và huỷ (cần ffmpeg) |
-| `vimediakit.modeldl` | Tải model faster-whisper từ Hugging Face: nối tiếp khi đứt, kiểm sha256, báo tiến trình, huỷ được |
-| `vimediakit.hwprofile` | Dò CPU/RAM/GPU NVIDIA và gợi ý model, số luồng, beam |
-| `vimediakit.diagnostics` | Gói chẩn đoán dạng zip, tự che giá trị nhạy cảm (key, token, mật khẩu) |
-| `vimediakit.errors` | Đổi ngoại lệ kỹ thuật thành câu tiếng Việt dễ hiểu |
-| `vimediakit.netmode` | Chế độ offline (biến môi trường `VIMEDIA_OFFLINE=1`) |
-| `vimediakit.history`, `applog`, `procutil`, `mediainfo` | Lịch sử ghi nguyên tử, log xoay vòng + crash log, chạy tiến trình không nháy console, đọc kích thước/thời lượng video không cần ffprobe |
-| `vimediakit.jobs`, `theme` | Tác vụ nền huỷ được cho PySide6 và bảng màu sáng/tối (cần `PySide6`) |
+| `vimediakit.srt` | Read/write `.srt`: tolerates CRLF, missing sequence numbers, and `.` used instead of `,` in timestamps |
+| `vimediakit.subtitles` | Export `srt/vtt/txt`, merge/split sentences, detect the right encoding (UTF-8, UTF-16, cp1258), diacritic-insensitive search |
+| `vimediakit.dubbing` | Experimental dubbing: each subtitle cue → TTS (a function you pass in) → placed at the exact timestamps, automatically sped up when a cue is too long (requires ffmpeg) |
+| `vimediakit.render_min` | Burn subtitles into a video and/or replace the audio track, with progress reporting and cancellation (requires ffmpeg) |
+| `vimediakit.modeldl` | Download faster-whisper models from Hugging Face: resume after interruption, sha256 verification, progress reporting, cancellable |
+| `vimediakit.hwprofile` | Detect CPU/RAM/NVIDIA GPU and recommend a model, thread count and beam size |
+| `vimediakit.diagnostics` | Zip diagnostic bundle that automatically redacts sensitive values (keys, tokens, passwords) |
+| `vimediakit.errors` | Turn technical exceptions into clear Vietnamese messages |
+| `vimediakit.netmode` | Offline mode (environment variable `VIMEDIA_OFFLINE=1`) |
+| `vimediakit.history`, `applog`, `procutil`, `mediainfo` | Atomic history writes, rotating log + crash log, running subprocesses without flashing a console window, reading video size/duration without ffprobe |
+| `vimediakit.jobs`, `theme` | Cancellable background jobs for PySide6 and a light/dark color palette (requires `PySide6`) |
 
-## Cài và chạy thử
+## Install and run the tests
 
 ```bash
 python -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt     # Windows: .venv\Scripts\pip
-python -m pytest                                  # chạy hoàn toàn offline
+python -m pytest                                  # runs fully offline
 ```
 
-Các test dùng ffmpeg sẽ tự bỏ qua nếu máy không có ffmpeg trong PATH.
+Tests that need ffmpeg are skipped automatically if ffmpeg is not on your PATH.
 
-## Ví dụ
+## Example
 
 ```python
 from vimediakit import subtitles
 
-cues = subtitles.doc("phu_de.srt")
-subtitles.ghi(cues, "phu_de.vtt")
+cues = subtitles.doc("phu_de.srt")      # read the subtitle file ("phu_de" = "subtitles")
+subtitles.ghi(cues, "phu_de.vtt")       # write it back out as WebVTT
 ```
 
-## Giấy phép và thành phần bên thứ ba
+## License and third-party components
 
-Mã trong repo theo giấy phép [MIT](LICENSE) (bản quyền thuộc tác giả `anhtahaylove`), cung cấp nguyên trạng, không bảo hành.
+The code in this repository is licensed under the [MIT License](LICENSE) (copyright held by the author, `anhtahaylove`) and is provided as is, without warranty.
 
-Repo **không đóng gói** bất kỳ thành phần bên thứ ba nào; những thứ bạn tự cài hoặc tải thêm có giấy phép riêng của chúng:
+The repository **does not bundle** any third-party components; anything you install or download yourself is covered by its own license:
 
-- **ffmpeg**: chương trình riêng, bạn tự cài. Tuỳ bản dựng, ffmpeg có thể theo GPL/LGPL; hãy xem giấy phép của bản bạn dùng trước khi phân phối lại cùng ffmpeg.
-- **Model Whisper**: `modeldl` chỉ tải từ Hugging Face khi bạn gọi nó; mỗi model có giấy phép riêng ghi trên trang kho model đó.
-- **PySide6** (tuỳ chọn, cho `jobs`, `theme`): LGPL/thương mại của The Qt Company. **numpy, soundfile, psutil**: giấy phép BSD.
+- **ffmpeg**: a separate program that you install yourself. Depending on the build, ffmpeg may be GPL or LGPL; check the license of the build you use before redistributing it together with ffmpeg.
+- **Whisper models**: `modeldl` only downloads from Hugging Face when you call it; each model has its own license, stated on that model's repository page.
+- **PySide6** (optional, for `jobs` and `theme`): LGPL/commercial, from The Qt Company. **numpy, soundfile, psutil**: BSD license.
 
-## Đóng góp
+## Contributing
 
-Xem [CONTRIBUTING.md](CONTRIBUTING.md). Lịch sử thay đổi ở [CHANGELOG.md](CHANGELOG.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md). The change history is in [CHANGELOG.md](CHANGELOG.md).

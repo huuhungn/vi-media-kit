@@ -1,16 +1,16 @@
-# netmode.py - chế độ offline rõ ràng: bật thì không có thao tác nào tự động đi ra mạng
-"""Bật bằng cài đặt trong giao diện hoặc biến môi trường VIMEDIA_OFFLINE=1.
-Khi bật: không tải model/giọng/gói GPU, không dùng dịch vụ trực tuyến; ứng dụng gọi dùng tài nguyên có sẵn trên máy.
-Các nơi tải file gọi `require_online("...")` trước khi mở kết nối."""
+# netmode.py - explicit offline mode: when enabled, no operation goes to the network on its own
+"""Enable it via a setting in the UI or the environment variable VIMEDIA_OFFLINE=1.
+When enabled: no downloading of models/voices/GPU packages and no online services; the app uses the resources already on the machine.
+Every place that downloads files calls `require_online("...")` before opening a connection."""
 from __future__ import annotations
 
 import os
 
-_state: dict[str, bool | None] = {"offline": None}  # None = theo biến môi trường
+_state: dict[str, bool | None] = {"offline": None}  # None = follow the environment variable
 
 
 class OfflineError(RuntimeError):
-    """Thao tác cần mạng nhưng đang ở chế độ offline."""
+    """The operation needs the network but offline mode is on."""
 
 
 def is_offline() -> bool:
@@ -20,7 +20,7 @@ def is_offline() -> bool:
 
 
 def set_offline(value: bool | None) -> None:
-    """True/False đặt cứng; None quay về theo biến môi trường."""
+    """True/False forces the value; None goes back to following the environment variable."""
     _state["offline"] = value
 
 

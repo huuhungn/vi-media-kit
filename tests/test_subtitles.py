@@ -1,4 +1,4 @@
-"""Xuất/đọc/sửa phụ đề: golden-file cho srt/vtt/txt, gộp/tách, đọc mã hoá, tìm lịch sử, theme, JobManager."""
+"""Export/read/edit subtitles: golden files for srt/vtt/txt, merge/split, encoding detection, history search, theme, JobManager."""
 import pytest
 
 from vimediakit import subtitles as SUB
@@ -61,7 +61,7 @@ def test_doc_van_ban_nhieu_ma_hoa(tmp_path):
         p = tmp_path / f"{enc}.txt"
         p.write_bytes(s.encode(enc))
         assert SUB.doc_van_ban(str(p)) == s, enc
-    # cp1258 (Windows tiếng Việt cũ): chỉ mã hoá được ký tự có sẵn trong bảng mã
+    # cp1258 (older Vietnamese Windows): can only encode characters that exist in the code page
     s2 = "Xin chào các bác, đây là tôi"
     p = tmp_path / "cp1258.txt"
     p.write_bytes(s2.encode("cp1258"))
@@ -125,7 +125,7 @@ def test_job_manager_mot_viec_va_huy(qapp_core):
     t1.err.connect(lambda m: seen.append(("err", m)))
     assert mgr.start(t1)
     t2 = jobs.Task(lambda p, l, c: 1)
-    assert not mgr.start(t2)             # đang bận → từ chối
+    assert not mgr.start(t2)             # busy → rejected
     assert mgr.shutdown(3000)
     assert not mgr.busy()
     assert t1.exc is not None and isinstance(t1.exc, jobs.Cancelled)

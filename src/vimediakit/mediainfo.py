@@ -1,6 +1,6 @@
-# mediainfo.py - đọc kích thước / thời lượng video mà KHÔNG cần ffprobe.exe (chỉ cần ffmpeg)
-"""probe(ffmpeg, path) -> (width, height, duration_giây). Ưu tiên ffprobe nếu nằm cạnh ffmpeg; không có thì phân tích
-stderr của `ffmpeg -i`. Ném ValueError nếu không đọc được."""
+# mediainfo.py - read video size / duration WITHOUT needing ffprobe.exe (only ffmpeg is required)
+"""probe(ffmpeg, path) -> (width, height, duration_seconds). Prefers ffprobe if it sits next to ffmpeg; otherwise parses the
+stderr of `ffmpeg -i`. Raises ValueError if the file cannot be read."""
 from __future__ import annotations
 
 import os

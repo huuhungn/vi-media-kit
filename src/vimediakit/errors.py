@@ -1,5 +1,5 @@
-# errors.py - đổi ngoại lệ kỹ thuật thành thông báo tiếng Việt dễ hiểu cho người dùng
-"""`thong_bao(exc)` → câu ngắn cho người dùng (kèm gợi ý làm gì tiếp). Chi tiết kỹ thuật vẫn ghi vào log."""
+# errors.py - turn technical exceptions into clear Vietnamese messages for users
+"""`thong_bao(exc)` → a short message for the user (with a hint on what to do next). Technical details still go to the log."""
 from __future__ import annotations
 
 import errno
@@ -9,7 +9,7 @@ import urllib.error
 
 
 def thong_bao(exc: BaseException) -> str:
-    # lỗi do app tự tạo đã có câu tiếng Việt (TaiModelError, OfflineError, DubError, RenderError...)
+    # errors raised by the app itself already carry a Vietnamese message (TaiModelError, OfflineError, DubError, RenderError...)
     name = type(exc).__name__
     if name in {"TaiModelError", "KhongTruyCap", "OfflineError", "DubError", "RenderError"}:
         return str(exc)

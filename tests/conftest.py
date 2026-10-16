@@ -1,4 +1,4 @@
-"""Cấu hình pytest: Qt offscreen; QCoreApplication dùng chung cho test QThread."""
+"""pytest configuration: Qt offscreen; a shared QCoreApplication for the QThread tests."""
 import os
 
 import pytest

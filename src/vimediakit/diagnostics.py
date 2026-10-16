@@ -1,6 +1,6 @@
-# diagnostics.py - gói chẩn đoán một file zip để gửi hỗ trợ (không chứa khoá API, văn bản hay âm thanh của người dùng)
-"""`xuat(data_dir, out_zip)`: log ứng dụng, thông tin máy/phiên bản, danh sách model/cache (tên + dung lượng), thiết lập đã
-che các giá trị nhạy cảm."""
+# diagnostics.py - bundle diagnostics into one zip file to send to support (contains no API keys, user text or audio)
+"""`xuat(data_dir, out_zip)`: app logs, machine/version info, list of models/caches (name + size), and settings with
+sensitive values redacted."""
 from __future__ import annotations
 
 import json
@@ -15,7 +15,7 @@ _SECRET = re.compile(r"key|token|secret|cookie|password|passwd|auth|credential",
 
 
 def che_bi_mat(obj):
-    """Đệ quy: mọi giá trị có tên khoá nhạy cảm thành '***'."""
+    """Recursively replace every value whose key name looks sensitive with '***'."""
     if isinstance(obj, dict):
         return {k: ("***" if _SECRET.search(str(k)) and v not in (None, "", False) else che_bi_mat(v)) for k, v in obj.items()}
     if isinstance(obj, list):
@@ -71,7 +71,7 @@ def thong_tin_may(app_version: str = "") -> dict:
 
 
 def xuat(data_dir: str, out_zip: str, settings: dict | None = None, app_version: str = "") -> str:
-    """Tạo out_zip; trả về đường dẫn. Không bao giờ ném lỗi vì một mục lẻ."""
+    """Create out_zip and return its path. Never raises because of a single bad entry."""
     os.makedirs(os.path.dirname(os.path.abspath(out_zip)), exist_ok=True)
     tmp = out_zip + ".tmp"
     with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as z:

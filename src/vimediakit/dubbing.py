@@ -1,11 +1,11 @@
-# dubbing.py - lồng tiếng tối thiểu: phụ đề .srt → từng câu đọc bằng TTS → ghép đúng mốc thời gian → một file âm thanh
-"""THỬ NGHIỆM.
+# dubbing.py - minimal dubbing: .srt subtitles → each cue read aloud by TTS → placed at the exact timestamps → one audio file
+"""EXPERIMENTAL.
 
-Cách làm: mỗi cue được đọc bằng `synth(text) -> đường dẫn file`; clip dài hơn khe thời gian thì tăng tốc (atempo, tối đa
-MAX_SPEEDUP) — vẫn dài hơn thì để tràn (câu sau bị đẩy lùi, không chồng lên). Kết quả là WAV mono 24 kHz (hoặc mp3/m4a
-theo đuôi file đích, mã hoá bằng ffmpeg).
+How it works: each cue is spoken with `synth(text) -> file path`; a clip longer than its time slot is sped up (atempo, at
+most MAX_SPEEDUP) — if it is still too long it overflows (the next cue is pushed back, never overlapped). The result is
+a mono 24 kHz WAV (or mp3/m4a depending on the target file extension, encoded with ffmpeg).
 
-Thuần Python + ffmpeg qua procutil; `synth` được tiêm vào nên kiểm thử không cần mạng.
+Pure Python + ffmpeg via procutil; `synth` is injected so tests need no network.
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ MIN_CLIP_S = 0.05
 
 
 class DubError(RuntimeError):
-    """Lỗi lồng tiếng (đã có thông báo tiếng Việt)."""
+    """Dubbing error (the message is already in Vietnamese)."""
 
 
 def _ff(ffmpeg: str, args: list[str], timeout: int = 600):
@@ -37,7 +37,7 @@ def _ff(ffmpeg: str, args: list[str], timeout: int = 600):
 
 
 def _atempo_chain(factor: float) -> str:
-    """atempo chỉ nhận 0.5–2.0 mỗi bước."""
+    """atempo only accepts 0.5–2.0 per stage."""
     parts = []
     f = factor
     while f > 2.0:
@@ -58,7 +58,7 @@ def _load_clip(ffmpeg: str, src: str, work: str, tag: str, speed: float = 1.0) -
 
 
 def lap_thoi_gian(cues: list[Cue], clip_lens: list[float]) -> list[tuple[float, float]]:
-    """Từ danh sách độ dài clip (đã gồm tăng tốc) → [(bắt đầu thực, kết thúc thực)]; không cho hai clip chồng nhau."""
+    """From the clip lengths (speed-up already applied) → [(actual start, actual end)]; two clips are never allowed to overlap."""
     out = []
     cur = 0.0
     for c, ln in zip(cues, clip_lens, strict=True):
@@ -72,7 +72,7 @@ def dub_cues(cues: list[Cue], synth: Callable[[str], str], ffmpeg: str, out_path
              on_progress: Callable[[int, str], None] | None = None,
              should_cancel: Callable[[], bool] | None = None,
              on_log: Callable[[str], None] | None = None, total_dur: float | None = None) -> dict:
-    """Trả về thống kê: {'cues', 'doc', 'tang_toc', 'tran', 'dai_giay', 'bo_qua'}."""
+    """Return statistics: {'cues', 'doc', 'tang_toc', 'tran', 'dai_giay', 'bo_qua'}."""
     prog = on_progress or (lambda p, s: None)
     log = on_log or (lambda m: None)
     cancel = should_cancel or (lambda: False)

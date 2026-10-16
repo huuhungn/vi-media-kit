@@ -1,5 +1,5 @@
-# subtitles.py - xuất/đọc/sửa phụ đề: srt, vtt, txt; gộp/tách câu; đọc file văn bản đúng mã hoá
-"""Phần thuần Python (không Qt) để GUI và kiểm thử dùng chung. Cue/parse/ghi SRT nằm ở srt.py."""
+# subtitles.py - export/read/edit subtitles: srt, vtt, txt; merge/split cues; read text files with the right encoding
+"""Pure-Python part (no Qt) shared by the GUI and the tests. Cue/parse/write for SRT live in srt.py."""
 from __future__ import annotations
 
 import os
@@ -11,7 +11,7 @@ FORMATS = ("srt", "vtt", "txt")
 
 
 def doc_van_ban(path: str) -> str:
-    """Đọc file văn bản thử lần lượt utf-8-sig, utf-16 (nếu có BOM), cp1258 (tiếng Việt Windows), cp1252, latin-1."""
+    """Read a text file, trying in turn utf-8-sig, utf-16 (if there is a BOM), cp1258 (Windows Vietnamese), cp1252, latin-1."""
     with open(path, "rb") as f:
         raw = f.read()
     if raw.startswith((b"\xff\xfe", b"\xfe\xff")):
@@ -25,7 +25,7 @@ def doc_van_ban(path: str) -> str:
 
 
 def srt_thanh_van_ban(raw: str, is_srt: bool = True) -> str:
-    """Rút phần chữ từ nội dung .srt (bỏ số thứ tự + mốc thời gian); không phải srt thì trả nguyên."""
+    """Extract the text from .srt content (dropping sequence numbers + timestamps); anything that is not srt is returned unchanged."""
     if not (is_srt or "-->" in raw):
         return raw
     out = []
@@ -66,7 +66,7 @@ def render(cues: list[Cue], fmt: str) -> str:
 
 
 def ghi(cues: list[Cue], path: str, fmt: str | None = None) -> str:
-    """Ghi nguyên tử (tmp → replace). fmt mặc định theo đuôi file. Trả về path."""
+    """Atomic write (tmp → replace). fmt defaults to the file extension. Returns path."""
     fmt = fmt or os.path.splitext(path)[1]
     data = render(cues, fmt)
     tmp = path + ".tmp"
@@ -77,7 +77,7 @@ def ghi(cues: list[Cue], path: str, fmt: str | None = None) -> str:
 
 
 def doc(path: str) -> list[Cue]:
-    """Đọc .srt/.vtt thành cue."""
+    """Read .srt/.vtt into cues."""
     raw = doc_van_ban(path)
     if raw.lstrip().upper().startswith("WEBVTT"):
         raw = re.sub(r"^WEBVTT[^\n]*\n", "", raw.lstrip(), flags=re.I)
@@ -91,7 +91,7 @@ def danh_so(cues: list[Cue]) -> list[Cue]:
 
 
 def gop_cau(cues: list[Cue], i: int) -> list[Cue]:
-    """Gộp câu i với câu i+1 (giữ thời gian từ đầu i đến cuối i+1)."""
+    """Merge cue i with cue i+1 (keeping the time span from the start of i to the end of i+1)."""
     if not 0 <= i < len(cues) - 1:
         raise IndexError("Không có câu kế tiếp để gộp")
     a, b = cues[i], cues[i + 1]
@@ -101,7 +101,7 @@ def gop_cau(cues: list[Cue], i: int) -> list[Cue]:
 
 
 def tach_cau(cues: list[Cue], i: int, vi_tri: int) -> list[Cue]:
-    """Tách câu i tại vị trí ký tự `vi_tri`; chia thời gian theo tỉ lệ số ký tự."""
+    """Split cue i at character position `vi_tri`; the time is divided in proportion to the number of characters."""
     c = cues[i]
     text = c.text or ""
     left, right = text[:vi_tri].strip(), text[vi_tri:].strip()
@@ -115,8 +115,8 @@ def tach_cau(cues: list[Cue], i: int, vi_tri: int) -> list[Cue]:
 
 
 def ap_van_ban_da_sua(cues: list[Cue], van_ban: str) -> tuple[list[Cue], bool]:
-    """Áp phần chữ người dùng đã sửa (mỗi dòng một câu) lên các cue. Chỉ áp khi số dòng khớp số cue có chữ;
-    trả (cues, da_ap)."""
+    """Apply user-edited text (one cue per line) to the cues. Only applied when the number of lines matches the number of cues
+    that have text; returns (cues, da_ap)."""
     lines = [x.strip() for x in van_ban.split("\n")]
     idx = [k for k, c in enumerate(cues) if (c.text or "").strip()]
     lines = [x for x in lines if x]
@@ -129,7 +129,7 @@ def ap_van_ban_da_sua(cues: list[Cue], van_ban: str) -> tuple[list[Cue], bool]:
 
 
 def tim_trong_lich_su(muc: list[dict], truy_van: str, truong: tuple[str, ...] = ("ten", "text", "file", "ghi_chu")) -> list[dict]:
-    """Tìm không phân biệt hoa/thường và dấu trong danh sách mục lịch sử (dict)."""
+    """Case- and diacritic-insensitive search over a list of history entries (dicts)."""
     import unicodedata
 
     def bo_dau(s: str) -> str:
