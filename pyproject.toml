@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vi-media-kit"
+version = "0.1.0"
+description = "Bộ công cụ nhỏ cho ứng dụng giọng nói/phụ đề tiếng Việt: SRT, lồng tiếng, xuất video, tải model, chẩn đoán"
+requires-python = ">=3.11"
+dependencies = ["numpy", "soundfile"]
+authors = [{ name = "anhtahaylove" }]
+
+[project.optional-dependencies]
+qt = ["PySide6-Essentials"]
+hw = ["psutil"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
