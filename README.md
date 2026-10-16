@@ -40,9 +40,15 @@ cues = subtitles.doc("phu_de.srt")
 subtitles.ghi(cues, "phu_de.vtt")
 ```
 
-## Giấy phép
+## Giấy phép và thành phần bên thứ ba
 
-Chưa chọn giấy phép. Khi chưa có tệp `LICENSE`, mặc định mọi quyền được bảo lưu cho tác giả; bạn có thể đọc mã nhưng chưa được tái sử dụng.
+Mã trong repo theo giấy phép [MIT](LICENSE) (bản quyền thuộc tác giả `anhtahaylove`), cung cấp nguyên trạng, không bảo hành.
+
+Repo **không đóng gói** bất kỳ thành phần bên thứ ba nào; những thứ bạn tự cài hoặc tải thêm có giấy phép riêng của chúng:
+
+- **ffmpeg**: chương trình riêng, bạn tự cài. Tuỳ bản dựng, ffmpeg có thể theo GPL/LGPL; hãy xem giấy phép của bản bạn dùng trước khi phân phối lại cùng ffmpeg.
+- **Model Whisper**: `modeldl` chỉ tải từ Hugging Face khi bạn gọi nó; mỗi model có giấy phép riêng ghi trên trang kho model đó.
+- **PySide6** (tuỳ chọn, cho `jobs`, `theme`): LGPL/thương mại của The Qt Company. **numpy, soundfile, psutil**: giấy phép BSD.
 
 ## Đóng góp
 

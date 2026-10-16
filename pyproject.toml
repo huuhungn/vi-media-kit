@@ -4,9 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vi-media-kit"
-version = "0.1.0"
+version = "0.1.1"
 description = "Bộ công cụ nhỏ cho ứng dụng giọng nói/phụ đề tiếng Việt: SRT, lồng tiếng, xuất video, tải model, chẩn đoán"
 requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
 dependencies = ["numpy", "soundfile"]
 authors = [{ name = "anhtahaylove" }]
 
