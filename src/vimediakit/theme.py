@@ -1,6 +1,6 @@
-# theme.py - bảng màu (token) sáng/tối và stylesheet Qt; không phụ thuộc Qt nên kiểm thử được
-"""`build_qss(name)` → stylesheet cho 'dark' | 'light'. `resolve(pref, system_dark)` → 'dark' | 'light'.
-Màu nhấn (hồng) giữ nguyên ở cả hai chế độ để nhận diện thương hiệu của app."""
+# theme.py - light/dark color palette (tokens) and Qt stylesheet; has no Qt dependency so it can be tested
+"""`build_qss(name)` → stylesheet for 'dark' | 'light'. `resolve(pref, system_dark)` → 'dark' | 'light'.
+The accent color (pink) stays the same in both modes to keep the app's brand identity."""
 from __future__ import annotations
 
 ACCENT = "#ec4899"
@@ -20,7 +20,7 @@ TOKENS = {
 
 
 def resolve(pref: str | None, system_dark: bool = True) -> str:
-    """pref: 'auto' | 'dark' | 'light' (giá trị lạ → auto)."""
+    """pref: 'auto' | 'dark' | 'light' (any other value → auto)."""
     if pref in ("dark", "light"):
         return pref
     return "dark" if system_dark else "light"

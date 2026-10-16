@@ -1,12 +1,12 @@
-# hwprofile.py - dò phần cứng và chọn cấu hình nhận dạng giọng nói phù hợp (PC có GPU / laptop chỉ có CPU)
+# hwprofile.py - detect the hardware and pick a suitable speech-recognition configuration (PC with a GPU / CPU-only laptop)
 """detect() -> Hardware; recommend(hw) -> Profile.
 
-Quy tắc (đo trên máy 10 lõi vật lý, model small, mẫu 56 s — đo bằng faster-whisper):
-- GPU NVIDIA + đủ gói CUDA (cublas/cudnn): chạy CUDA. VRAM >= 5 GB → large-v3-turbo; >= 3,5 GB → medium; còn lại small.
-- Không có GPU / thiếu gói CUDA / GPU yếu: chạy CPU int8, model small (base nếu RAM < 6 GB hoặc < 3 lõi).
-  cpu_threads = số lõi vật lý (chừa 1 lõi cho giao diện khi >= 6 lõi); mặc định của ctranslate2 chỉ là 4.
-  beam 3 (chính xác) khi >= 6 lõi, beam 1 (nhanh gần gấp đôi) với máy yếu hơn.
-- Âm thanh dài (>= 25 s) chạy theo lô (BatchedInferencePipeline): nhanh hơn ~25 % với CPU, nhiều hơn với GPU.
+Rules (measured on a 10-physical-core machine, small model, 56 s sample, using faster-whisper):
+- NVIDIA GPU + the CUDA packages (cublas/cudnn): run on CUDA. VRAM >= 5 GB → large-v3-turbo; >= 3.5 GB → medium; otherwise small.
+- No GPU / missing CUDA packages / weak GPU: run on CPU with int8, small model (base if RAM < 6 GB or < 3 cores).
+  cpu_threads = number of physical cores (leave 1 core for the UI when there are >= 6 cores); ctranslate2 defaults to only 4.
+  beam 3 (more accurate) with >= 6 cores, beam 1 (almost twice as fast) on weaker machines.
+- Long audio (>= 25 s) is processed in batches (BatchedInferencePipeline): ~25% faster on CPU, more on GPU.
 """
 from __future__ import annotations
 
@@ -17,13 +17,13 @@ from dataclasses import dataclass, field
 
 @dataclass
 class Hardware:
-    cpu_cores: int = 4          # lõi vật lý
-    cpu_threads: int = 4        # luồng logic
+    cpu_cores: int = 4          # physical cores
+    cpu_threads: int = 4        # logical threads
     ram_gb: float = 8.0
-    gpu_name: str = ""          # "" nếu không có GPU NVIDIA
+    gpu_name: str = ""          # "" if there is no NVIDIA GPU
     vram_mb: int = 0
-    cuda_devices: int = 0       # ctranslate2 thấy bao nhiêu GPU CUDA
-    cuda_libs: bool = False     # đã có cublas64_12 + cudnn64_9
+    cuda_devices: int = 0       # number of CUDA GPUs ctranslate2 can see
+    cuda_libs: bool = False     # cublas64_12 + cudnn64_9 are present
     notes: list[str] = field(default_factory=list)
 
     @property
@@ -55,7 +55,7 @@ def _nvidia_smi() -> tuple[str, int]:
 
 
 def _cuda_libs_ok() -> bool:
-    """Có nạp được cublas 12 và cudnn 9 (Windows) hay không. Nền tảng khác: tin vào ctranslate2."""
+    """Whether cublas 12 and cudnn 9 can be loaded (Windows). On other platforms: trust ctranslate2."""
     if os.name != "nt":
         return True
     import ctypes
@@ -103,7 +103,7 @@ def recommend(hw: Hardware | None = None) -> Profile:
             model, batch = "small", 8
         return Profile("cuda", model, 3, 0, batch,
                        f"GPU {hw.gpu_name} ({hw.vram_mb // 1024} GB) — chạy CUDA, model {model}")
-    # CPU (laptop không có GPU rời, hoặc GPU chưa có gói CUDA)
+    # CPU (laptop without a discrete GPU, or a GPU without the CUDA packages)
     cores = hw.cpu_cores
     threads = cores if cores < 6 else min(cores - 1, 12)
     if hw.ram_gb < 6 or cores < 3:
@@ -124,7 +124,7 @@ _cache: dict[str, Hardware] = {}
 
 
 def hardware(refresh: bool = False) -> Hardware:
-    """Dò một lần mỗi phiên (nvidia-smi chậm ~0,2 s); refresh=True sau khi cài gói GPU."""
+    """Detect once per session (nvidia-smi takes ~0.2 s); use refresh=True after installing the GPU packages."""
     if refresh or "hw" not in _cache:
         _cache["hw"] = detect()
     return _cache["hw"]

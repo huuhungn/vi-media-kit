@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "vi-media-kit"
 version = "0.1.1"
-description = "Bộ công cụ nhỏ cho ứng dụng giọng nói/phụ đề tiếng Việt: SRT, lồng tiếng, xuất video, tải model, chẩn đoán"
+description = "Small toolkit for Vietnamese speech/subtitle apps: SRT, dubbing, video export, model download, diagnostics"
 requires-python = ">=3.11"
 license = "MIT"
 license-files = ["LICENSE"]

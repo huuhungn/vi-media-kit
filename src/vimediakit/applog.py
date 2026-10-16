@@ -1,6 +1,6 @@
-# applog.py - ghi log ra file + bắt lỗi chưa xử lý (bản exe windowed không có console)
-"""Log xoay vòng ở <data>/logs/app.log (3 x 1 MB). Lỗi không bắt được (luồng chính và luồng phụ) cũng vào đây,
-để người dùng gửi file này khi báo lỗi."""
+# applog.py - write logs to a file + capture unhandled errors (windowed exe builds have no console)
+"""Rotating log at <data>/logs/app.log (3 x 1 MB). Uncaught errors (main thread and worker threads) land here too,
+so users can attach this file when reporting a bug."""
 from __future__ import annotations
 
 import logging
@@ -15,7 +15,7 @@ _crash_fh = None
 
 
 def init(data_dir: str) -> str:
-    """Gọi một lần, sớm nhất có thể. Trả về đường dẫn file log ('' nếu không ghi được)."""
+    """Call once, as early as possible. Returns the log file path ('' if it cannot be written)."""
     global _path, _crash_fh
     if _path:
         return _path
@@ -43,9 +43,9 @@ def init(data_dir: str) -> str:
 
     sys.excepthook = _hook
     threading.excepthook = _thread_hook
-    try:  # sập native (ctranslate2/onnxruntime/Qt): ghi traceback Python của mọi luồng vào crash.log
+    try:  # native crash (ctranslate2/onnxruntime/Qt): write the Python traceback of every thread to crash.log
         import faulthandler
-        _crash_fh = open(os.path.join(os.path.dirname(p), "crash.log"), "a", encoding="utf-8")  # noqa: SIM115 - giữ mở suốt phiên
+        _crash_fh = open(os.path.join(os.path.dirname(p), "crash.log"), "a", encoding="utf-8")  # noqa: SIM115 - kept open for the whole session
         _crash_fh.write("--- phiên " + time.strftime("%Y-%m-%d %H:%M:%S") + " ---\n")
         _crash_fh.flush()
         faulthandler.enable(file=_crash_fh, all_threads=True)

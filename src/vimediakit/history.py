@@ -1,5 +1,5 @@
-# history.py - lịch sử nghe ra chữ (STT): lưu nguyên tử, giới hạn số mục, tìm không dấu
-"""File: <data>/stt_history.json (danh sách mới nhất ở đầu). Không lưu toàn văn, chỉ trích 200 ký tự đầu."""
+# history.py - speech-to-text (STT) history: atomic writes, capped entry count, diacritic-insensitive search
+"""File: <data>/stt_history.json (newest first). The full text is not stored, only an excerpt of the first 200 characters."""
 from __future__ import annotations
 
 import json

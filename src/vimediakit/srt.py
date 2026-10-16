@@ -1,5 +1,5 @@
-# srt.py - đọc/ghi phụ đề SRT (viết mới, độc lập)
-"""Cue = một câu phụ đề. `parse_srt` chịu được CRLF, thiếu số thứ tự, dấu '.' thay ',' ở mốc thời gian."""
+# srt.py - read/write SRT subtitles (newly written, standalone)
+"""Cue = one subtitle cue. `parse_srt` tolerates CRLF, missing sequence numbers, and '.' instead of ',' in timestamps."""
 from __future__ import annotations
 
 import re
@@ -21,7 +21,7 @@ _ARROW = re.compile(r"(\S+)\s*-->\s*(\S+)")
 
 
 def fmt_time(sec: float) -> str:
-    """Giây → 'HH:MM:SS,mmm' (làm tròn đến mili giây, không âm)."""
+    """Seconds → 'HH:MM:SS,mmm' (rounded to the millisecond, never negative)."""
     ms = max(0, round(float(sec) * 1000))
     h, ms = divmod(ms, 3_600_000)
     m, ms = divmod(ms, 60_000)

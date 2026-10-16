@@ -1,8 +1,8 @@
-# render_min.py - xuất video tối thiểu: ghi cứng phụ đề vào hình (burn-in) và/hoặc thay track âm thanh
-"""THỬ NGHIỆM.
+# render_min.py - minimal video export: burn subtitles into the picture (hard-sub) and/or replace the audio track
+"""EXPERIMENTAL.
 
-ffmpeg chạy với cwd là thư mục tạm chứa file phụ đề tên ASCII để tránh rắc rối thoát ký tự `\\`, `:`, dấu tiếng Việt
-trong bộ lọc `subtitles=`. Tiến trình lấy từ `-progress pipe:1`; huỷ được (terminate ffmpeg).
+ffmpeg runs with its cwd set to a temporary directory holding an ASCII-named subtitle file, to avoid escaping problems with `\\`, `:`
+and Vietnamese diacritics in the `subtitles=` filter. Progress comes from `-progress pipe:1`; cancellable (terminates ffmpeg).
 """
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ STYLE = "FontName=Arial,FontSize=22,PrimaryColour=&H00FFFFFF&,OutlineColour=&H00
 
 
 class RenderError(RuntimeError):
-    """Lỗi xuất video (đã có thông báo tiếng Việt)."""
+    """Video export error (the message is already in Vietnamese)."""
 
 
 def duration_of(ffmpeg: str, media: str) -> float:
@@ -49,7 +49,7 @@ def build_cmd(ffmpeg: str, video: str, sub_name: str | None, audio: str | None, 
 def render(ffmpeg: str, video: str, out_path: str, srt: str | None = None, audio: str | None = None,
            on_progress: Callable[[int, str], None] | None = None,
            should_cancel: Callable[[], bool] | None = None) -> str:
-    """Ghi phụ đề vào video (srt) và/hoặc thay âm thanh (audio). Ghi ra file tạm rồi đổi tên."""
+    """Burn subtitles into the video (srt) and/or replace the audio (audio). Writes to a temporary file, then renames it."""
     prog = on_progress or (lambda p, s: None)
     cancel = should_cancel or (lambda: False)
     if not (srt or audio):

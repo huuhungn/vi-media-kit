@@ -1,5 +1,5 @@
-# procutil.py - chạy tiến trình con không nháy cửa sổ console (bản exe windowed trên Windows)
-"""Dùng thay `subprocess.run/Popen` cho ffmpeg, nvidia-smi...: thêm CREATE_NO_WINDOW trên Windows."""
+# procutil.py - run child processes without flashing a console window (windowed exe builds on Windows)
+"""Use in place of `subprocess.run/Popen` for ffmpeg, nvidia-smi...: adds CREATE_NO_WINDOW on Windows."""
 from __future__ import annotations
 
 import subprocess

@@ -1,4 +1,4 @@
-"""Các mô-đun nhỏ: srt, errors, netmode, history, diagnostics, hwprofile, mediainfo."""
+"""The small modules: srt, errors, netmode, history, diagnostics, hwprofile, mediainfo."""
 import json
 import urllib.error
 import zipfile
