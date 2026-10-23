@@ -1,5 +1,5 @@
 pytest>=8
-ruff>=0.6
+ruff>=0.17.1
 soundfile
 numpy
 PySide6-Essentials
